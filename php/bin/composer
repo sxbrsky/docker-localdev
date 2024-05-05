@@ -2,16 +2,22 @@
 
 set -e
 
-if [ ! "$(docker ps -a -q -f name=php-cli)" ]; then
-    if [ "$(docker ps -aq -f status=exited -f name=php-cli)" ]; then
-        docker rm php-cli
+CNAME=php-cli
+
+if [ ! "$(docker ps -qa -f status=running -f name=$CNAME)" ]; then
+    if [ "$(docker ps -a -q -f name=$CNAME)" ]; then
+        # prune old container
+        docker kill $CNAME
+        docker rm $CNAME
     fi
 
+    # start container
     docker run -d --interactive --tty \
         --user 1000:1000 \
         --volume /home/`whoami`:/home/`whoami` \
-        --name php-cli \
+        --name $CNAME \
     infrastructure/php:8.3.6-cli
 fi
 
-docker exec -i -w "$PWD" php-cli composer $@
+# execute command
+docker exec -i -w $PWD $CNAME composer $@
