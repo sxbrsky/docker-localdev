@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+if [ ! "$(docker ps -a -q -f name=php-cli)" ]; then
+    if [ "$(docker ps -aq -f status=exited -f name=php-cli)" ]; then
+        docker rm php-cli
+    fi
+
+    docker run -d --interactive --tty \
+        --user 1000:1000 \
+        --volume /home/`whoami`:/home/`whoami` \
+        --name php-cli \
+    infrastructure/php:8.3.6-cli
+fi
+
+docker exec -i -w "$PWD" php-cli composer $@

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+DOCKER_BUILDKIT=1
+docker buildx create --name phpbuilder --use
+docker buildx inspect --bootstrap
+
+docker buildx build \
+    --platform linux/amd64 \
+    --tag infrastructure/php:8.3.6-cli $PWD \
+    --load
+
+docker buildx stop phpbuilder
+docker buildx rm phpbuilder
+docker buildx ls
+
+ln -s "$PWD"/bin/php /usr/bin/php
+ln -s "$PWD"/bin/composer /usr/bin/composer
