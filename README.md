@@ -1,4 +1,4 @@
-# homelab
+# local-infrastructure
 
 Docker based local environment.
 
