@@ -1,1 +1,17 @@
-.idea
+# ide
+/.idea/
+/.fleet/
+/.run/
+/.vscode/
+
+# .env
+.env
+
+# data
+/.localdev/**/data/
+!/.localdev/**/data/.gitkeep
+
+# logs
+/.localdev/**/logs/
+!/.localdev/**/logs/.gitkeep
+

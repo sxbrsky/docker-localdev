@@ -1,4 +1,4 @@
-# local-infrastructure
+# localdev
 
 Docker based local environment.
 

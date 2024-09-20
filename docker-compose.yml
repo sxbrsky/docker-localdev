@@ -1,47 +1,81 @@
-volumes:
-  portainer-data:
-    driver: local
+version: '3.8'
+
+networks:
+  localdev:
+    driver: bridge
 
 services:
-  reverse-proxy:
-    container_name: traefik
-    image: traefik:v3.0.0
-    restart: unless-stopped
-    command:
-      - "--api.dashboard=true"
-      - "--log.level=DEBUG"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
+  ### mariadb #############
+  mariadb:
+    restart: always
+    image: mariadb:${MARIADB_VERSION}
+    volumes:
+      - ${MARIADB_DATA_DIR}:/var/lib/mysql
     ports:
-      - 80:80
-      - 443:443
+      - "${MARIADB_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+    networks:
+      - localdev
+
+  ### php-fpm #############
+  php-fpm:
+    restart: always
+    image: sxbrsky/php-fpm:${PHP_VERSION}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.traefik.entrypoints=web
-      - traefik.http.routers.traefik.service=api@internal
-      - traefik.http.routers.traefik.rule=Host(`traefik.localhost`)
-      - traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)
-      - traefik.http.routers.dashboard.service=api@internal
-    extra_hosts:
-      - host.docker.internal:127.17.0.1
-      
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
+      - ${CODE_PATH_HOST}:${CODE_PATH_CONTAINER}${CODE_PATH_CONTAINER_FLAG}
+    expose:
+      - 9000
+    networks:
+      - localdev
+
+  ### nginx #############
+  nginx:
+    restart: always
+    image: sxbrsky/nginx:${NGINX_VERSION}
+    volumes:
+      - ${CODE_PATH_HOST}:${CODE_PATH_CONTAINER}${CODE_PATH_CONTAINER_FLAG}
+      - ${NGINX_CONF_PATH}:/etc/nginx/nginx.conf:ro
+      - ${NGINX_CONF_DIR}:/etc/nginx/conf.d:ro
+      - ${NGINX_LOG_DIR}:/var/www/log:ro
+    ports:
+       - "${NGINX_HTTP_PORT}:80"
+       - "${NGINX_HTTPS_PORT}:443"
     depends_on:
-      - reverse-proxy
-    command: -H unix:///var/run/docker.sock
-    restart: unless-stopped
+      - php-fpm
+    networks:
+      - localdev
+
+  ### phpMyAdmin #############
+  phpmyadmin:
+    restart: always
+    image: phpmyadmin:${PMA_VERSION}
+    environment:
+      - PMA_ARBITRARY=1
+    ports:
+      - "${PMA_PORT}:80"
+    depends_on:
+      - mariadb
+    networks:
+      - localdev
+
+  ### redmine #############
+  redmine:
+    restart: always
+    image: redmine:${REDMINE_VERSION}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer-data:/data
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.portainer.entrypoints=web
-      - traefik.http.routers.portainer.rule=Host(`portainer.localhost`)
-      - traefik.http.routers.portainer.service=portainer
-      - traefik.http.services.portainer.loadbalancer.server.port=9000
+      - ~/code:/projects:ro
+      - ${REDMINE_PLUGINS_DIR}:/usr/src/redmine/plugins:ro
+      - ${REDMINE_THEMES_DIR}:/usr/src/redmine/public/themes:ro
+    environment:
+      REDMINE_DB_MYSQL: ${REDMINE_DB_MYSQL}
+      REDMINE_DB_USERNAME: ${REDMINE_DB_USERNAME}
+      REDMINE_DB_PASSWORD: ${REDMINE_DB_PASSWORD}
+      REDMINE_DB_DATABASE: ${REDMINE_DB_DATABASE}
+      REDMINE_SECRET_KEY_BASE: ${REDMINE_SECRET_KEY_BASE}
+    ports:
+      - "${REDMINE_PORT}:3000"
+    depends_on:
+      - mariadb
+    networks:
+      - localdev
