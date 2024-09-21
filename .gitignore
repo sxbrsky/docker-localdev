@@ -9,9 +9,12 @@
 
 # data
 /.localdev/**/data/
-!/.localdev/**/data/.gitkeep
+!.localdev/**/data/.gitkeep
 
 # logs
 /.localdev/**/logs/
-!/.localdev/**/logs/.gitkeep
+!.localdev/**/logs/.gitkeep
 
+# nginx
+/.localdev/nginx/conf.d/
+!.localdev/nginx/conf.d/default.conf
