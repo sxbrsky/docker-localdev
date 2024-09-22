@@ -50,6 +50,8 @@ services:
   phpmyadmin:
     restart: always
     image: phpmyadmin:${PMA_VERSION}
+    volumes:
+      - ${PMA_THEMES_DIR}:/var/www/html/themes
     environment:
       - PMA_ARBITRARY=1
     ports:
