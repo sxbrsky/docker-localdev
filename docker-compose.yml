@@ -4,6 +4,10 @@ networks:
   localdev:
     driver: bridge
 
+volumes:
+  elasticsearch:
+    driver: local
+
 services:
   ### mariadb #############
   mariadb:
@@ -50,6 +54,8 @@ services:
   phpmyadmin:
     restart: always
     image: phpmyadmin:${PMA_VERSION}
+    volumes:
+      - ${PMA_THEMES_DIR}:/var/www/html/themes
     environment:
       - PMA_ARBITRARY=1
     ports:
@@ -79,3 +85,32 @@ services:
       - mariadb
     networks:
       - localdev
+
+  ### elasticsearch #############
+  elasticsearch:
+    restart: always
+    build:
+      context: elasticsearch/
+      args:
+        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+      - elasticsearch:/usr/share/elasticsearch/data:Z
+    environment:
+      ELASTICSEARCH_PORT: ${ELASTICSEARCH_PORT}
+      ELASTICSEARCH_CLUSTER_NAME: ${ELASTICSEARCH_CLUSTER_NAME}
+      ELASTICSEARCH_NODE_NAME: ${ELASTICSEARCH_NODE_NAME}
+      ELASTICSEARCH_DISCOVERY_SEEDS: ${ELASTICSEARCH_DISCOVERY_SEEDS}
+      ELASTICSEARCH_INIT_MASTER_NODE: ${ELASTICSEARCH_INIT_MASTER_NODE}
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "${ELASTICSEARCH_PORT}:9200"
+    networks:
+      - localdev
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
