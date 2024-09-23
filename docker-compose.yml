@@ -7,6 +7,8 @@ networks:
 volumes:
   elasticsearch:
     driver: local
+  redis:
+    driver: local
 
 services:
   ### mariadb #############
@@ -83,6 +85,20 @@ services:
       - "${REDMINE_PORT}:3000"
     depends_on:
       - mariadb
+    networks:
+      - localdev
+
+  ### redis #############
+  redis:
+    restart: always
+    build:
+      context: redis/
+      args:
+        REDIS_VERSION: ${REDIS_VERSION}
+    volumes:
+      - redis:/data
+    ports:
+      - "${REDIS_PORT}:6379"
     networks:
       - localdev
 
