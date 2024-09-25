@@ -57,9 +57,10 @@ services:
   ### phpMyAdmin #############
   phpmyadmin:
     restart: always
-    image: phpmyadmin:${PMA_VERSION}
-    volumes:
-      - ${PMA_THEMES_DIR}:/var/www/html/themes
+    build:
+      context: phpmyadmin/
+      args:
+        PMA_VERSION: ${PMA_VERSION}
     environment:
       - PMA_ARBITRARY=1
     ports:
