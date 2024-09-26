@@ -73,11 +73,12 @@ services:
   ### redmine #############
   redmine:
     restart: always
-    image: redmine:${REDMINE_VERSION}
+    build:
+      context: redmine/
+      args:
+        REDMINE_VERSION: ${REDMINE_VERSION}
     volumes:
       - ~/code:/projects:ro
-      - ${REDMINE_PLUGINS_DIR}:/usr/src/redmine/plugins:ro
-      - ${REDMINE_THEMES_DIR}:/usr/src/redmine/public/themes:ro
     environment:
       REDMINE_DB_MYSQL: ${REDMINE_DB_MYSQL}
       REDMINE_DB_USERNAME: ${REDMINE_DB_USERNAME}
